@@ -1,0 +1,105 @@
+#!/usr/bin/env ruby
+
+require 'nokogiri'
+require 'open-uri'
+require 'open3'
+require 'addressable/uri'
+
+class SpellChecker
+  def initialize(personal_dictionary_path)
+    @personal_dictionary_path = personal_dictionary_path
+  end
+
+  def check(doc, lang)
+    Open3.pipeline_rw('pandoc --from html --to plain', "hunspell -d #{translate(lang)} -p #{@personal_dictionary_path} -i UTF-8 -l") do |stdin, stdout, wait_thrs|
+      stdin.puts(doc)
+      stdin.close
+      stdout.read.split.uniq
+    end
+  end
+
+  private
+
+  # The W3C [recommends](https://www.w3.org/International/questions/qa-html-language-declarations)
+  # to specify language using identifiers as per [RFC 5646](https://tools.ietf.org/html/rfc5646)
+  # which uses dashes. Hunspell, however, uses underscores. This method translates RFC-style identifiers
+  # to hunspell-style.
+  def translate(lang)
+    lang.tr('-', '_')
+  end
+end
+
+class Spider
+  attr_reader :todo, :done
+
+  def initialize(starting_point, base_url = starting_point)
+    @todo = []
+    @done = []
+    todo << Addressable::URI.parse(starting_point)
+    @base_url = Addressable::URI.parse(base_url)
+  end
+
+  def start
+    while todo.any?
+      url = todo.pop
+
+      begin
+        extracted = links(url) do |u, d|
+          yield u, d if block_given?
+        end
+      rescue
+        warn "Error opening #{url}: #{$!}"
+      end
+
+      done.append(url)
+      todo.concat(extracted - done - todo)
+    end
+  end
+
+  private
+
+  def links(uri)
+    # We are using open-uri, which follows redirects and also provides the content-type.
+    response = URI(uri).read
+    return [] unless response.content_type == 'text/html'
+    doc = Nokogiri::HTML(response)
+
+    links = doc.css('a[href]').map do |e|
+      link = Addressable::URI.parse(e['href'])
+
+      if link.relative?
+        uri.join(link)
+      else
+        if link.to_s.start_with?(@base_url.to_s)
+          link
+        else
+          next
+        end
+      end
+    rescue
+      warn $!
+    end.compact
+
+    yield uri, doc if block_given?
+    links
+  end
+end
+
+if ARGV.size != 1
+  warn "Expected exactly one argument, but received #{ARGV.size}."
+  exit 1
+end
+
+spell_checker = SpellChecker.new('local.dic')
+
+Spider.new(ARGV.first).start do |url, doc|
+  lang = doc.root['lang'] || 'de-DE'
+  # TODO Remove sections marked as no-spellcheck
+  # TODO Find sections with a lang attribute and handle them separately
+  unknown_words = spell_checker.check(doc.to_s, lang)
+
+  unless unknown_words.empty?
+    warn "#{unknown_words.size} unknown words at #{url}:"
+    #warn unknown_words.join(', ')
+  end
+end
