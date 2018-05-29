@@ -66,15 +66,13 @@ class Spider
 
     links = doc.css('a[href]').map do |e|
       link = Addressable::URI.parse(e['href'])
+      link = uri.join(link) if link.relative?
 
-      if link.relative?
-        uri.join(link)
+      if link.to_s.start_with?(@base_url.to_s)
+        link
       else
-        if link.to_s.start_with?(@base_url.to_s)
-          link
-        else
-          next
-        end
+        # warn "Skipping #{link} as it is outside #{@base_url}"
+        next
       end
     rescue
       warn $!
@@ -100,6 +98,6 @@ Spider.new(ARGV.first).start do |url, doc|
 
   unless unknown_words.empty?
     warn "#{unknown_words.size} unknown words at #{url}:"
-    #warn unknown_words.join(', ')
+    puts unknown_words
   end
 end
