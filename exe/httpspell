@@ -92,7 +92,12 @@ spell_checker = SpellChecker.new('local.dic')
 
 Spider.new(ARGV.first).start do |url, doc|
   lang = doc.root['lang'] || 'de-DE'
-  # TODO Remove sections marked as no-spellcheck
+
+  # Remove sections that are not to be spellchecked
+  doc.css('pre').each(&:unlink)
+  doc.css('code').each(&:unlink)
+  doc.css('[spellcheck=false]').each(&:unlink)
+
   # TODO Find sections with a lang attribute and handle them separately
   unknown_words = spell_checker.check(doc.to_s, lang)
 
