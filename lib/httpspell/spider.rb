@@ -2,6 +2,7 @@ require 'nokogiri'
 require 'open-uri'
 require 'open3'
 require 'addressable/uri'
+require 'English'
 
 module HttpSpell
   # rubocop:disable Metrics/AbcSize
@@ -23,13 +24,15 @@ module HttpSpell
         begin
           extracted = links(url) do |u, d|
             yield u, d if block_given?
+          rescue
+            warn "Callback error for #{url}: #{$ERROR_INFO}"
           end
-        rescue StandardError
-          warn "Error opening #{url}: #{$ERROR_INFO}"
-        end
 
-        done.append(url)
-        todo.concat(extracted - done - todo)
+          done.append(url)
+          todo.concat(extracted - done - todo)
+        rescue StandardError
+          warn "Could not fetch #{url}: #{$ERROR_INFO}"
+        end
       end
     end
 
