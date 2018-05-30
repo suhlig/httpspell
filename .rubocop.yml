@@ -1,0 +1,30 @@
+AllCops:
+  TargetRubyVersion: 2.5.1
+  Include:
+    - '**/Gemfile'
+    - '**/Rakefile'
+    - '**/config.ru'
+    - '**/*.rake'
+  Exclude:
+    - vendor/**/*
+    - db/migrations/**/*
+
+  DisplayCopNames:
+    Enabled: true
+
+  DisplayStyleGuide:
+    Enabled: true
+
+Naming/FileName:
+  Exclude:
+  - Guardfile
+
+Metrics/BlockLength:
+  Exclude:
+    - spec/**/*
+
+Metrics/LineLength:
+  Max: 160
+
+Style/Documentation:
+  Enabled: false
