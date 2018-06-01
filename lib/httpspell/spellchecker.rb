@@ -1,11 +1,22 @@
 module HttpSpell
   class SpellChecker
-    def initialize(personal_dictionary_path = nil)
+    def initialize(personal_dictionary_path = nil, tracing: false)
       @personal_dictionary_arg = "-p #{personal_dictionary_path}" if personal_dictionary_path
+      @tracing = tracing
     end
 
     def check(doc, lang)
-      Open3.pipeline_rw('pandoc --from html --to plain', "hunspell -d #{translate(lang)} #{@personal_dictionary_arg} -i UTF-8 -l") do |stdin, stdout, _wait_thrs|
+      commands = [
+        'pandoc --from html --to plain',
+        "hunspell -d #{translate(lang)} #{@personal_dictionary_arg} -i UTF-8 -l",
+      ]
+
+      if @tracing
+        warn "Piping the HTML document into the following chain of commands:"
+        warn commands
+      end
+
+      Open3.pipeline_rw(*commands) do |stdin, stdout, _wait_thrs|
         stdin.puts(doc)
         stdin.close
         stdout.read.split.uniq

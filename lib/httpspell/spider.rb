@@ -8,27 +8,39 @@ module HttpSpell
   class Spider
     attr_reader :todo, :done
 
-    def initialize(starting_point, limit: nil, tracing: false)
+    def initialize(starting_point, whitelist: nil, blacklist: [], tracing: false)
       @todo = []
       @done = []
       todo << Addressable::URI.parse(starting_point)
-      @limit = limit || /^#{starting_point}/
+      @whitelist = whitelist || [/^#{starting_point}/]
+      @blacklist = blacklist
       @tracing = tracing
     end
 
     def start
+      success = true
+
       while todo.any?
         url = todo.pop
-        extracted = links(url) do |u, d|
-          yield u, d if block_given?
-        rescue
-          warn "Callback error for #{url}: #{$ERROR_INFO}"
-          warn $ERROR_INFO.backtrace if @tracing
-        end
 
-        done.append(url)
-        todo.concat(extracted - done - todo)
+        begin
+          extracted = links(url) do |u, d|
+            yield u, d if block_given?
+          rescue
+            warn "Callback error for #{url}: #{$ERROR_INFO}"
+            warn $ERROR_INFO.backtrace if @tracing
+          end
+
+          done.append(url)
+          todo.concat(extracted - done - todo)
+        rescue StandardError
+          warn "Skipping #{url} because of #{$ERROR_INFO.message}"
+          warn $ERROR_INFO.backtrace if @tracing
+          success = false
+        end
       end
+
+      return success
     end
 
     private
@@ -37,8 +49,9 @@ module HttpSpell
       # We are using open-uri, which follows redirects and also provides the content-type.
       response = open(uri).read
 
-      if response.respond_to?(:content_type)
-        return [] unless response.content_type == 'text/html'
+      if response.respond_to?(:content_type) && response.content_type != 'text/html'
+        warn "Skipping #{uri} because it is not HTML" if @tracing
+        return []
       end
 
       doc = Nokogiri::HTML(response)
@@ -46,7 +59,18 @@ module HttpSpell
       links = doc.css('a[href]').map do |e|
         link = Addressable::URI.parse(e['href'])
         link = uri.join(link) if link.relative?
-        next unless @limit.match?(link.to_s)
+
+        if @whitelist.none? { |re| re.match?(link.to_s) }
+          warn "Skipping #{link} because it is not on the whitelist #{@whitelist}" if @tracing
+          next
+        end
+
+        if @blacklist.any? { |re| re.match?(link.to_s) }
+          # TODO Print _which_ entry of the blacklist matches
+          warn "Skipping #{link} because it is on the blacklist #{@blacklist}" if @tracing
+          next
+        end
+
         # TODO Ignore same page links (some anchor)
         link
       rescue StandardError
