@@ -4,6 +4,7 @@
 require 'optparse'
 require 'httpspell/spider'
 require 'httpspell/spellchecker'
+require 'httpspell/version'
 
 personal_dictionary_path = nil
 
@@ -13,6 +14,7 @@ begin
       Spellchecks a website via HTTP.
 
     BANNER
+    parser.version = HttpSpell::VERSION
 
     parser.on('-p', '--personal-dictionary=FILE', 'path to the personal dictionary file') do |p|
       personal_dictionary_path = p
