@@ -49,6 +49,7 @@ if ARGV.size != 1
 end
 
 spell_checker = HttpSpell::SpellChecker.new(personal_dictionary_path)
+has_unknown_words = false
 
 HttpSpell::Spider.new(ARGV.first, tracing: tracing).start do |url, doc|
   lang = force_language || doc.root['lang'] || ENV['LANGUAGE']
@@ -66,5 +67,8 @@ HttpSpell::Spider.new(ARGV.first, tracing: tracing).start do |url, doc|
   else
     warn "#{unknown_words.size} unknown words (language is #{lang}) at #{url}:" if verbose
     puts unknown_words
+    has_unknown_words = true
   end
 end
+
+exit 1 if has_unknown_words
