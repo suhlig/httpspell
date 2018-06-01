@@ -46,10 +46,9 @@ module HttpSpell
     private
 
     def links(uri)
-      # We are using open-uri, which follows redirects and also provides the content-type.
-      response = open(uri).read
+      response = URI(uri).read # We are using open-uri, which follows redirects and also provides the content-type.
 
-      if response.respond_to?(:content_type) && response.content_type != 'text/html'
+      if response.content_type != 'text/html'
         warn "Skipping #{uri} because it is not HTML" if @tracing
         return []
       end
