@@ -10,9 +10,12 @@ task default: ['spec:all']
 
 namespace :spec do
   desc 'Run all specs'
-  task all: ['rubocop:auto_correct', :unit]
+  task all: %i[rubocop:auto_correct unit system]
 
-  RSpec::Core::RakeTask.new(:unit) do |t|
-    t.pattern = 'spec/unit/**/*_spec.rb'
+  %w[unit system].each do |type|
+    desc "Run #{type} tests"
+    RSpec::Core::RakeTask.new(type) do |t|
+      t.pattern = "spec/#{type}/**/*_spec.rb"
+    end
   end
 end
