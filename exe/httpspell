@@ -8,6 +8,8 @@ require 'httpspell/version'
 
 personal_dictionary_path = nil
 force_language = nil
+tracing = nil
+verbose = nil
 
 begin
   OptionParser.new do |parser|
@@ -25,6 +27,14 @@ begin
       force_language = l
     end
 
+    parser.on('-t', '--trace', 'enable error tracing') do |l|
+      tracing = true
+    end
+
+    parser.on('-V', '--verbose', "explain what's happening") do |l|
+      verbose = true
+    end
+
     # TODO: --recursive, defaults to false
     # TODO wget has some additional options for recursive behavior that should be reviewed
   end.parse!
@@ -40,7 +50,7 @@ end
 
 spell_checker = HttpSpell::SpellChecker.new(personal_dictionary_path)
 
-HttpSpell::Spider.new(ARGV.first).start do |url, doc|
+HttpSpell::Spider.new(ARGV.first, tracing: tracing).start do |url, doc|
   lang = force_language || doc.root['lang'] || ENV['LANGUAGE']
 
   # Remove sections that are not to be spellchecked
@@ -51,8 +61,10 @@ HttpSpell::Spider.new(ARGV.first).start do |url, doc|
   # TODO: Find sections with a lang attribute and handle them separately
   unknown_words = spell_checker.check(doc.to_s, lang)
 
-  unless unknown_words.empty?
-    warn "#{unknown_words.size} unknown words at #{url}:"
+  if unknown_words.empty?
+    warn "No unknown words (language is #{lang}) at #{url}." if verbose
+  else
+    warn "#{unknown_words.size} unknown words (language is #{lang}) at #{url}:" if verbose
     puts unknown_words
   end
 end
