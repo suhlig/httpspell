@@ -4,13 +4,38 @@ This is a spellchecker that recursively fetches HTML pages, converts them to pla
 
 Words that are not in the dictionary for the given language (inferred from the `lang` attribute of the HTML document's root element) can be added to a personal dictionary, which will mark the word as correctly spelled.
 
+# Usage
+
+* The following command will retrieve the HTML document at https://example.com, spellcheck it, and not print anything because there are no errors:
+
+  ```bash
+  $ httpspell https://example.com
+  ```
+
+  The exit code is `0`.
+
+* The following command will spellcheck the README of this project as rendered by GitHub, and print a list of unknown words. Note that we set the language to `en_US` because GitHub declares 'en' as document language, but the installed dictionaries usually refer the a specific language variant like `en_US`:
+
+  ```bash
+  $ httpspell https://github.com/suhlig/httpspell/blob/master/README.markdown --language en_US
+  suhlig
+  Permalink
+  httpspell
+  sloc
+  pandoc
+  hunspell
+  ...
+  ```
+
+  The exit code is `1`.
+
 # What is *not* checked
 
-* When spidering a site, `httpspell` will skip all responses with a `content-type` header other than `text/html`.
+* When spidering a site, `httpspell` will skip all responses with a `content-type` header other than `text/html` (unless pointing it to file, in which case it accepts anything).
 * Before converting, `httpspell` removes the following nodes from the HTML DOM as they are not a good target for spellchecking:
   - `code`
   - `pre`
-  - Elements with `spellcheck='false'` (this is how HTML5 allows tagging elements as a target for spellchecking)
+  - Elements with `spellcheck='false'` (this is how HTML5 allows tagging elements as a being target for spellchecking or not)
 
 # Misc
 
