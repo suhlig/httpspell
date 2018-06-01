@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    httpspell (1.1.0)
+    httpspell (1.2.0)
       addressable
       nokogiri
 
