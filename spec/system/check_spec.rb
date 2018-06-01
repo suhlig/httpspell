@@ -13,7 +13,7 @@ describe 'check', type: 'aruba' do
     end
 
     it 'complains about a broken link' do
-      run "#{httpspell} --limit #{aruba.root_directory}/spec #{aruba.root_directory}/spec/fixtures/en_US/no-error-broken-link.html"
+      run "#{httpspell} --limit #{aruba.root_directory}/spec #{fixture('en_US/no-error-broken-link.html')}"
       expect(last_command_started).not_to be_successfully_executed
       expect(last_command_started.exit_status).to eq(2)
       expect(last_command_started).to have_output(/nowhere/)
@@ -21,7 +21,7 @@ describe 'check', type: 'aruba' do
 
     context 'no spelling errors were found' do
       it 'is silent' do
-        run "#{httpspell} #{aruba.root_directory}/spec/fixtures/en_US/no-errors.html"
+        run "#{httpspell} #{fixture('en_US/no-errors.html')}"
         expect(last_command_started).to be_successfully_executed
         expect(last_command_started).not_to have_output
       end
@@ -29,7 +29,7 @@ describe 'check', type: 'aruba' do
 
     context 'one spelling error' do
       it 'prints unknown words' do
-        run "#{httpspell} #{aruba.root_directory}/spec/fixtures/en_US/single-spelling-error.html"
+        run "#{httpspell} #{fixture('en_US/single-spelling-error')}.html"
         expect(last_command_started).not_to be_successfully_executed
         expect(last_command_started.exit_status).to eq(1)
         expect(last_command_started).to have_output('Jabberwocky')
