@@ -10,6 +10,7 @@ personal_dictionary_path = nil
 force_language = nil
 tracing = nil
 verbose = nil
+limit = nil
 
 begin
   OptionParser.new do |parser|
@@ -27,11 +28,15 @@ begin
       force_language = l
     end
 
-    parser.on('-t', '--trace', 'enable error tracing') do |l|
+    parser.on('-L', '--limit=EXPRESSION', 'limit recursive retrieval to URLs matching a regular EXPRESSION') do |l|
+      limit = Regexp.new(l)
+    end
+
+    parser.on('-t', '--trace', 'enable error tracing') do
       tracing = true
     end
 
-    parser.on('-V', '--verbose', "explain what's happening") do |l|
+    parser.on('-V', '--verbose', "explain what's happening") do
       verbose = true
     end
 
@@ -51,24 +56,30 @@ end
 spell_checker = HttpSpell::SpellChecker.new(personal_dictionary_path)
 has_unknown_words = false
 
-HttpSpell::Spider.new(ARGV.first, tracing: tracing).start do |url, doc|
-  lang = force_language || doc.root['lang'] || ENV['LANGUAGE']
+begin
+  HttpSpell::Spider.new(ARGV.first, limit: limit, tracing: tracing).start do |url, doc|
+    lang = force_language || doc.root['lang'] || ENV['LANGUAGE']
 
-  # Remove sections that are not to be spellchecked
-  doc.css('pre').each(&:unlink)
-  doc.css('code').each(&:unlink)
-  doc.css('[spellcheck=false]').each(&:unlink)
+    # Remove sections that are not to be spellchecked
+    doc.css('pre').each(&:unlink)
+    doc.css('code').each(&:unlink)
+    doc.css('[spellcheck=false]').each(&:unlink)
 
-  # TODO: Find sections with a lang attribute and handle them separately
-  unknown_words = spell_checker.check(doc.to_s, lang)
+    # TODO: Find sections with a lang attribute and handle them separately
+    unknown_words = spell_checker.check(doc.to_s, lang)
 
-  if unknown_words.empty?
-    warn "No unknown words (language is #{lang}) at #{url}." if verbose
-  else
-    warn "#{unknown_words.size} unknown words (language is #{lang}) at #{url}:" if verbose
-    puts unknown_words
-    has_unknown_words = true
+    if unknown_words.empty?
+      warn "No unknown words (language is #{lang}) at #{url}." if verbose
+    else
+      warn "#{unknown_words.size} unknown words (language is #{lang}) at #{url}:" if verbose
+      puts unknown_words
+      has_unknown_words = true
+    end
   end
+rescue StandardError
+  warn $ERROR_INFO.message
+  warn $ERROR_INFO.backtrace if tracing
+  exit 2
 end
 
 exit 1 if has_unknown_words

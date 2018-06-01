@@ -5,37 +5,29 @@ require 'addressable/uri'
 require 'English'
 
 module HttpSpell
-  # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Metrics/MethodLength
   class Spider
     attr_reader :todo, :done
 
-    def initialize(starting_point, base_url = starting_point, tracing: false)
+    def initialize(starting_point, limit: nil, tracing: false)
       @todo = []
       @done = []
       todo << Addressable::URI.parse(starting_point)
-      @base_url = Addressable::URI.parse(base_url)
+      @limit = limit || /^#{starting_point}/
       @tracing = tracing
     end
 
     def start
       while todo.any?
         url = todo.pop
-
-        begin
-          extracted = links(url) do |u, d|
-            yield u, d if block_given?
-          rescue
-            warn "Callback error for #{url}: #{$ERROR_INFO}"
-            warn $ERROR_INFO.backtrace if @tracing
-          end
-
-          done.append(url)
-          todo.concat(extracted - done - todo)
-        rescue StandardError
-          warn "Could not fetch #{url}: #{$ERROR_INFO}"
+        extracted = links(url) do |u, d|
+          yield u, d if block_given?
+        rescue
+          warn "Callback error for #{url}: #{$ERROR_INFO}"
           warn $ERROR_INFO.backtrace if @tracing
         end
+
+        done.append(url)
+        todo.concat(extracted - done - todo)
       end
     end
 
@@ -54,8 +46,8 @@ module HttpSpell
       links = doc.css('a[href]').map do |e|
         link = Addressable::URI.parse(e['href'])
         link = uri.join(link) if link.relative?
-        next unless link.to_s.start_with?(@base_url.to_s)
-        # TODO Ignore same page links (some some anchor)
+        next unless @limit.match?(link.to_s)
+        # TODO Ignore same page links (some anchor)
         link
       rescue StandardError
         warn $ERROR_INFO.message
@@ -63,9 +55,9 @@ module HttpSpell
       end.compact
 
       yield uri, doc if block_given?
+
+      warn "Adding #{links.size} links from #{uri}" if @tracing
       links
     end
   end
-  # rubocop:enable Metrics/AbcSize
-  # rubocop:enable Metrics/MethodLength
 end
