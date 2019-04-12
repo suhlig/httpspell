@@ -46,7 +46,7 @@ module HttpSpell
     private
 
     def links(uri)
-      response = URI(uri).read # We are using open-uri, which follows redirects and also provides the content-type.
+      response = http_get(URI(uri))
 
       if response.content_type != 'text/html'
         warn "Skipping #{uri} because it is not HTML" if @tracing
@@ -81,6 +81,19 @@ module HttpSpell
 
       warn "Adding #{links.size} links from #{uri}" if @tracing
       links
+    end
+
+    # https://twin.github.io/improving-open-uri/
+    def http_get(uri)
+      tries = 10
+
+      begin
+        uri.open(redirect: false)
+      rescue OpenURI::HTTPRedirect => redirect
+        uri = redirect.uri
+        retry if (tries -= 1) > 0
+        raise
+      end
     end
   end
 end
