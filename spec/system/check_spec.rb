@@ -21,7 +21,7 @@ describe 'check', type: 'aruba' do
   end
 
   it 'complains about a non-existing starting point' do
-    run "#{httpspell} http://localhost:#{port}/nowhere"
+    run_command "#{httpspell} http://localhost:#{port}/nowhere"
     expect(last_command_started).not_to be_successfully_executed
     expect(last_command_started.exit_status).to eq(2)
   end
@@ -35,12 +35,12 @@ describe 'check', type: 'aruba' do
     end
 
     it 'has an exit code of 0' do
-      run "#{httpspell} #{url}"
+      run_command "#{httpspell} #{url}"
       expect(last_command_started).to be_successfully_executed
     end
 
     it 'is silent' do
-      run "#{httpspell} #{url}"
+      run_command "#{httpspell} #{url}"
       expect(last_command_started).not_to have_output
     end
   end
@@ -54,13 +54,13 @@ describe 'check', type: 'aruba' do
     end
 
     it 'has an exit code of 0' do
-      run "#{httpspell} #{url}"
+      run_command "#{httpspell} #{url}"
       stop_all_commands
       expect(last_command_started.exit_status).to eq(1)
     end
 
     it 'prints unknown words' do
-      run "#{httpspell} #{url}"
+      run_command "#{httpspell} #{url}"
       expect(last_command_started).to have_output('Jabberwocky')
     end
   end
@@ -73,7 +73,7 @@ describe 'check', type: 'aruba' do
     end
 
     it 'complains about a broken link' do
-      run "#{httpspell} --whitelist http://localhost:#{port}/ http://localhost:#{port}/no-error-broken-link.html"
+      run_command "#{httpspell} --whitelist http://localhost:#{port}/ http://localhost:#{port}/no-error-broken-link.html"
       expect(last_command_started).not_to be_successfully_executed
       expect(last_command_started.exit_status).to eq(2)
       expect(last_command_started).to have_output(/nowhere/)
@@ -90,7 +90,7 @@ describe 'check', type: 'aruba' do
     end
 
     it 'ignores blacklisted URLs' do
-      run "#{httpspell} --blacklist single-spelling-error.html #{url}"
+      run_command "#{httpspell} --blacklist single-spelling-error.html #{url}"
       expect(last_command_started).to be_successfully_executed
       expect(last_command_started.stdout).to be_empty
     end
@@ -107,13 +107,13 @@ describe 'check', type: 'aruba' do
     end
 
     it 'reports the broken link' do
-      run "#{httpspell} --whitelist http://localhost:#{port}/ #{url}"
+      run_command "#{httpspell} --whitelist http://localhost:#{port}/ #{url}"
       expect(last_command_started).not_to be_successfully_executed
       expect(last_command_started.exit_status).to eq(2)
     end
 
     it 'visits the linked page and reports its errors' do
-      run "#{httpspell} --whitelist http://localhost:#{port}/ #{url}"
+      run_command "#{httpspell} --whitelist http://localhost:#{port}/ #{url}"
       expect(last_command_started).not_to be_successfully_executed
       expect(last_command_started.stdout).to match(/Jabberwocky/)
       expect(last_command_started.stderr).to match(/nowhere/)
