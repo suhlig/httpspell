@@ -97,7 +97,7 @@ GEM
       pry (>= 0.13, < 0.15)
     public_suffix (5.0.0)
     racc (1.6.2)
-    rack (3.0.0)
+    rack (3.0.4.2)
     rackup (0.2.2)
       rack (>= 3.0.0.beta1)
       webrick
