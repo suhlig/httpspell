@@ -1,5 +1,6 @@
 AllCops:
-  TargetRubyVersion: 3.0
+  NewCops: enable
+  TargetRubyVersion: 3.3
   Include:
     - '**/Gemfile'
     - '**/Rakefile'
@@ -8,23 +9,17 @@ AllCops:
   Exclude:
     - vendor/**/*
     - db/migrations/**/*
-
   DisplayCopNames:
     Enabled: true
-
   DisplayStyleGuide:
     Enabled: true
-
 Naming/FileName:
   Exclude:
-  - Guardfile
-
+    - Guardfile
 Metrics/BlockLength:
   Exclude:
     - spec/**/*
-
-Metrics/LineLength:
+Layout/LineLength:
   Max: 160
-
 Style/Documentation:
   Enabled: false

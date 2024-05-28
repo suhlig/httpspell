@@ -59,11 +59,11 @@ if ARGV.size != 1
   exit 1
 end
 
-spell_checker = HttpSpell::SpellChecker.new(personal_dictionary_path, tracing: tracing)
+spell_checker = HttpSpell::SpellChecker.new(personal_dictionary_path, tracing:)
 has_unknown_words = false
 
-spider_success = HttpSpell::Spider.new(ARGV.first, whitelist: whitelist, blacklist: blacklist, tracing: tracing).start do |url, doc|
-  lang = force_language || doc.root['lang'] || ENV['LANGUAGE']
+spider_success = HttpSpell::Spider.new(ARGV.first, whitelist:, blacklist:, tracing:).start do |url, doc|
+  lang = force_language || doc.root['lang'] || ENV.fetch('LANGUAGE', nil)
 
   # Remove sections that are not to be spellchecked
   doc.css('pre').each(&:unlink)
