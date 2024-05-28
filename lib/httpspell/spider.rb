@@ -46,9 +46,9 @@ module HttpSpell
     private
 
     def links(uri)
-      response = http_get(URI(uri))
+      response = http_get(uri)
 
-      if response.content_type != 'text/html'
+      if response.respond_to?(:content_type) && response.content_type != 'text/html'
         warn "Skipping #{uri} because it is not HTML" if @tracing
         return []
       end
@@ -88,7 +88,7 @@ module HttpSpell
       tries = 10
 
       begin
-        uri.open(redirect: false)
+        URI.open(uri, redirect: false)
       rescue OpenURI::HTTPRedirect => redirect
         uri = redirect.uri
         retry if (tries -= 1) > 0
