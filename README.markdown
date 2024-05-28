@@ -46,3 +46,19 @@ If you produce content with kramdown (e.g. using Jekyll), setting `spellcheck='f
 ```
 {: spellcheck="false"}
 ```
+
+# Dictionaries
+
+Hunspell uses the system dictionary paths; on the Mac this is `~/Library/Spelling/`. Get some dictionaries as explained in the [hunspell](https://github.com/hunspell/hunspell) project:
+
+```command
+$ wget -O en_US.aff  https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.aff
+$ wget -O en_US.dic https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.dic
+```
+
+German:
+
+```command
+$ wget -O ~/Library/Spelling/de_DE.dic https://cgit.freedesktop.org/libreoffice/dictionaries/plain/de/de_DE_frami.dic
+$ wget -O ~/Library/Spelling/de_DE.aff https://cgit.freedesktop.org/libreoffice/dictionaries/plain/de/de_DE_frami.aff
+```
