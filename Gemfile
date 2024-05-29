@@ -9,6 +9,7 @@ group :development do
   gem 'guard'
   gem 'guard-bundler'
   gem 'guard-rspec'
+  gem 'httpx'
   gem 'pry'
   gem 'pry-byebug'
   gem 'rake'

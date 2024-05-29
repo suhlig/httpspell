@@ -59,27 +59,38 @@ if ARGV.size != 1
   exit 1
 end
 
-spell_checker = HttpSpell::SpellChecker.new(personal_dictionary_path, tracing:)
+def check(doc, lang, personal_dictionary_path, verbose)
+  unknown_words = HttpSpell::SpellChecker.new(personal_dictionary_path, verbose:).check(doc, lang)
+
+  if unknown_words.empty?
+    warn 'No unknown words.' if verbose
+  else
+    warn "#{unknown_words.size} unknown words:" if verbose
+    puts unknown_words
+    true
+  end
+end
+
 has_unknown_words = false
 
-spider_success = HttpSpell::Spider.new(ARGV.first, whitelist:, blacklist:, tracing:).start do |url, doc|
+spider_success = HttpSpell::Spider.new(ARGV.first, whitelist:, blacklist:, verbose:, tracing:).start do |url, doc|
   lang = force_language || doc.root['lang'] || ENV.fetch('LANGUAGE', nil)
+  warn "Checking #{url} as #{lang}" if verbose
 
-  # Remove sections that are not to be spellchecked
+  # Remove elements that are not to be spellchecked
   doc.css('pre').each(&:unlink)
   doc.css('code').each(&:unlink)
   doc.css('[spellcheck=false]').each(&:unlink)
 
-  # TODO: Find sections with a lang attribute and handle them separately
-  unknown_words = spell_checker.check(doc.to_s, lang)
-
-  if unknown_words.empty?
-    warn "No unknown words (language is #{lang}) at #{url}." if verbose
-  else
-    warn "#{unknown_words.size} unknown words (language is #{lang}) at #{url}:" if verbose
-    puts unknown_words
-    has_unknown_words = true
+  # Handle elements with a different lang attribute separately
+  doc.css(%([lang]:not([lang="#{lang}"]))).each do |element|
+    warn "Handling #{element.name} with lang #{element['lang']}:" if verbose
+    has_unknown_words |= check(element.to_s, element['lang'], personal_dictionary_path, verbose)
+    element.unlink
   end
+
+  # Everything else
+  has_unknown_words |= check(doc.to_s, lang, personal_dictionary_path, verbose)
 end
 
 exit 2 unless spider_success

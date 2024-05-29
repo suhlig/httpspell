@@ -8,12 +8,13 @@ module HttpSpell
   class Spider
     attr_reader :todo, :done
 
-    def initialize(starting_point, whitelist: nil, blacklist: [], tracing: false)
+    def initialize(starting_point, whitelist: nil, blacklist: [], verbose: false, tracing: false)
       @todo = []
       @done = []
       todo << Addressable::URI.parse(starting_point)
       @whitelist = whitelist || [/^#{starting_point}/]
       @blacklist = blacklist
+      @verbose = verbose
       @tracing = tracing
     end
 
@@ -49,7 +50,7 @@ module HttpSpell
       response = http_get(uri)
 
       if response.respond_to?(:content_type) && response.content_type != 'text/html'
-        warn "Skipping #{uri} because it is not HTML" if @tracing
+        warn "Skipping #{uri} because it is not HTML" if @verbose
         return []
       end
 
@@ -60,13 +61,13 @@ module HttpSpell
         link = uri.join(link) if link.relative?
 
         if @whitelist.none? { |re| re.match?(link.to_s) }
-          warn "Skipping #{link} because it is not on the whitelist #{@whitelist}" if @tracing
+          warn "Skipping #{link} because it is not on the whitelist #{@whitelist}" if @verbose
           next
         end
 
         if @blacklist.any? { |re| re.match?(link.to_s) }
           # TODO Print _which_ entry of the blacklist matches
-          warn "Skipping #{link} because it is on the blacklist #{@blacklist}" if @tracing
+          warn "Skipping #{link} because it is on the blacklist #{@blacklist}" if @verbose
           next
         end
 
@@ -79,7 +80,7 @@ module HttpSpell
 
       yield uri, doc if block_given?
 
-      warn "Adding #{links.size} links from #{uri}" if @tracing
+      warn "Adding #{links.size} links from #{uri}" if @verbose
       links
     end
 

@@ -2,16 +2,50 @@
 
 require 'aruba/rspec'
 require 'stub_server'
+require 'httpx'
+
+dictionaries = {
+  'https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.aff' => 'en_US.aff',
+  'https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.dic' => 'en_US.dic',
+  'https://cgit.freedesktop.org/libreoffice/dictionaries/plain/de/de_DE_frami.dic' => 'de_DE.dic',
+  'https://cgit.freedesktop.org/libreoffice/dictionaries/plain/de/de_DE_frami.aff' => 'de_DE.aff',
+  'https://cgit.freedesktop.org/libreoffice/dictionaries/plain/it_IT/it_IT.dic' => 'it_IT.dic',
+  'https://cgit.freedesktop.org/libreoffice/dictionaries/plain/it_IT/it_IT.aff' => 'it_IT.aff',
+}
 
 describe 'check', type: 'aruba' do
-  let(:httpspell) { "bundle exec #{aruba.root_directory}/exe/httpspell" }
+  let(:httpspell) {
+    ENV['DICPATH'] = "#{aruba.root_directory}/spec/dictionaries"
+    "bundle exec #{aruba.root_directory}/exe/httpspell"
+  }
+
   let(:replies) do
-    {
-       '/nowhere' => [404, {'content-type' => 'text/html'}, ['does not exist']],
-    }
+    { '/nowhere' => [404, {'content-type' => 'text/html'}, ['does not exist']], }
   end
 
   let(:port) { rand((40000..50000)) }
+
+  before(:all) do
+    dictionaries.transform_values! do |file_name|
+      "#{aruba.root_directory}/spec/dictionaries/#{file_name}"
+    end
+
+    dictionaries.delete_if { |_, file_name| File.exist?(file_name) }
+
+
+    unless dictionaries.empty?
+      warn "Downloading #{dictionaries.size} dictionaries"
+
+      HTTPX.plugin(:callbacks).on_response_completed do |request, response|
+        raise if response.error
+
+        file_name = dictionaries[request.uri.to_s]
+        raise "no file name for #{request.uri}" unless file_name
+
+        File.write(file_name, response.body)
+      end.get(*dictionaries.keys)
+    end
+  end
 
   around(:example) do |example|
     StubServer.open(port, replies) do |server|
@@ -29,9 +63,24 @@ describe 'check', type: 'aruba' do
   context 'content without spelling errors' do
     let(:url) { "http://localhost:#{port}/no-errors.html" }
     let(:replies) do
-      {
-         '/no-errors.html' => [200, {'content-type' => 'text/html'}, fixture('en_US/no-errors.html')],
-      }
+      { '/no-errors.html' => [200, {'content-type' => 'text/html'}, fixture('en_US/no-errors.html')] }
+    end
+
+    it 'has an exit code of 0' do
+      run_command "#{httpspell} #{url}"
+      expect(last_command_started).to be_successfully_executed
+    end
+
+    it 'is silent' do
+      run_command "#{httpspell} #{url}"
+      expect(last_command_started).not_to have_output
+    end
+  end
+
+  context 'mixed-language content without spelling errors' do
+    let(:url) { "http://localhost:#{port}/mixed/no-errors.html" }
+    let(:replies) do
+      { '/mixed/no-errors.html' => [200, {'content-type' => 'text/html'}, fixture('mixed/no-errors.html')], }
     end
 
     it 'has an exit code of 0' do
@@ -67,9 +116,7 @@ describe 'check', type: 'aruba' do
 
   context 'broken links' do
     let(:replies) do
-      {
-        '/no-error-broken-link.html' => [200, {'content-type' => 'text/html'}, fixture('en_US/no-error-broken-link.html')],
-      }
+      { '/no-error-broken-link.html' => [200, {'content-type' => 'text/html'}, fixture('en_US/no-error-broken-link.html')], }
     end
 
     it 'complains about a broken link' do

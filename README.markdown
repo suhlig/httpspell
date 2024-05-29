@@ -1,7 +1,5 @@
 # `httpspell`
 
-[![Build Status](https://travis-ci.org/suhlig/httpspell.svg?branch=master)](https://travis-ci.org/suhlig/httpspell)
-
 This is a spellchecker that recursively fetches HTML pages, converts them to plain text (using [pandoc](http://pandoc.org/)), and spellchecks them with [hunspell](https://hunspell.github.io/). Unknown words will be printed to `stdout`, which makes the tool a good candidate for CI pipelines where you might want to take action when a spelling error is found on a web page.
 
 Words that are not in the dictionary for the given language (inferred from the `lang` attribute of the HTML document's root element) can be added to a personal dictionary, which will mark the word as correctly spelled.
@@ -52,8 +50,8 @@ If you produce content with kramdown (e.g. using Jekyll), setting `spellcheck='f
 Hunspell uses the system dictionary paths; on the Mac this is `~/Library/Spelling/`. Get some dictionaries as explained in the [hunspell](https://github.com/hunspell/hunspell) project:
 
 ```command
-$ wget -O en_US.aff  https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.aff
-$ wget -O en_US.dic https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.dic
+$ wget -O ~/Library/Spelling/en_US.aff https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.aff
+$ wget -O ~/Library/Spelling/en_US.dic https://cgit.freedesktop.org/libreoffice/dictionaries/plain/en/en_US.dic
 ```
 
 German:
@@ -61,4 +59,11 @@ German:
 ```command
 $ wget -O ~/Library/Spelling/de_DE.dic https://cgit.freedesktop.org/libreoffice/dictionaries/plain/de/de_DE_frami.dic
 $ wget -O ~/Library/Spelling/de_DE.aff https://cgit.freedesktop.org/libreoffice/dictionaries/plain/de/de_DE_frami.aff
+```
+
+Italian (for integration tests):
+
+```command
+$ wget -O ~/Library/Spelling/it_IT.dic https://cgit.freedesktop.org/libreoffice/dictionaries/plain/it_IT/it_IT.dic
+$ wget -O ~/Library/Spelling/it_IT.aff https://cgit.freedesktop.org/libreoffice/dictionaries/plain/it_IT/it_IT.aff
 ```

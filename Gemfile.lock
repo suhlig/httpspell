@@ -68,6 +68,9 @@ GEM
       guard (~> 2.1)
       guard-compat (~> 1.1)
       rspec (>= 2.99.0, < 4.0)
+    http-2-next (1.0.3)
+    httpx (1.2.5)
+      http-2-next (>= 1.0.3)
     json (2.7.2)
     language_server-protocol (3.17.0.3)
     listen (3.9.0)
@@ -175,6 +178,7 @@ DEPENDENCIES
   guard-bundler
   guard-rspec
   httpspell!
+  httpx
   pry
   pry-byebug
   rake

@@ -1,8 +1,8 @@
 module HttpSpell
   class SpellChecker
-    def initialize(personal_dictionary_path = nil, tracing: false)
+    def initialize(personal_dictionary_path = nil, verbose: false)
       @personal_dictionary_arg = "-p #{personal_dictionary_path}" if personal_dictionary_path
-      @tracing = tracing
+      @verbose = verbose
     end
 
     def check(doc, lang)
@@ -11,7 +11,7 @@ module HttpSpell
         "hunspell -d #{translate(lang)} #{@personal_dictionary_arg} -i UTF-8 -l",
       ]
 
-      if @tracing
+      if @verbose
         warn "Piping the HTML document into the following chain of commands:"
         warn commands
       end
