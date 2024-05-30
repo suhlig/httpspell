@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module HttpSpell
   class SpellChecker
     def initialize(personal_dictionary_path = nil, verbose: false)
@@ -12,7 +14,7 @@ module HttpSpell
       ]
 
       if @verbose
-        warn "Piping the HTML document into the following chain of commands:"
+        warn 'Piping the HTML document into the following chain of commands:'
         warn commands
       end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'nokogiri'
 require 'open-uri'
 require 'open3'
@@ -27,13 +29,13 @@ module HttpSpell
         begin
           extracted = links(url) do |u, d|
             yield u, d if block_given?
-          rescue
+          rescue StandardError
             warn "Callback error for #{url}: #{$ERROR_INFO}"
             warn $ERROR_INFO.backtrace if @tracing
           end
 
           done.append(url)
-          todo.concat(extracted - done - todo)
+          todo.concat(extracted - done - todo).uniq!
         rescue StandardError
           warn "Skipping #{url} because of #{$ERROR_INFO.message}"
           warn $ERROR_INFO.backtrace if @tracing
@@ -41,7 +43,7 @@ module HttpSpell
         end
       end
 
-      return success
+      success
     end
 
     private
@@ -66,12 +68,14 @@ module HttpSpell
         end
 
         if @blacklist.any? { |re| re.match?(link.to_s) }
-          # TODO Print _which_ entry of the blacklist matches
+          # TODO: Print _which_ entry of the blacklist matches
           warn "Skipping #{link} because it is on the blacklist #{@blacklist}" if @verbose
           next
         end
 
-        # TODO Ignore same page links (some anchor)
+        # Ignore fragment; we always check the whole page
+        link.fragment = nil
+
         link
       rescue StandardError
         warn $ERROR_INFO.message
@@ -89,10 +93,10 @@ module HttpSpell
       tries = 10
 
       begin
-        URI.open(uri, redirect: false)
-      rescue OpenURI::HTTPRedirect => redirect
-        uri = redirect.uri
-        retry if (tries -= 1) > 0
+        URI.parse(uri).open(redirect: false)
+      rescue OpenURI::HTTPRedirect => e
+        uri = e.uri
+        retry if (tries -= 1).positive?
         raise
       end
     end

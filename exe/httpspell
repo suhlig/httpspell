@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 require 'optparse'
-require 'httpspell/spider'
-require 'httpspell/spellchecker'
-require 'httpspell/version'
+require 'http_spell/spider'
+require 'http_spell/spellchecker'
+require 'http_spell/version'
 
 personal_dictionary_path = nil
 force_language = nil

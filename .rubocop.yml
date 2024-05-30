@@ -1,7 +1,11 @@
+require:
+  - rubocop-rake
+  - rubocop-rspec
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.3
   Include:
+    - '**/*.rb'
     - '**/Gemfile'
     - '**/Rakefile'
     - '**/config.ru'
@@ -23,3 +27,19 @@ Layout/LineLength:
   Max: 160
 Style/Documentation:
   Enabled: false
+Metrics/AbcSize:
+  Enabled: false
+Metrics/MethodLength:
+  Enabled: false
+Metrics/CyclomaticComplexity:
+  Enabled: false
+Style/TrailingCommaInArrayLiteral:
+  Enabled: false
+RSpec/ExampleWording:
+  Enabled: false
+RSpec/InstanceVariable:
+  AssignmentOnly: true
+RSpec/ExampleLength:
+  Max: 10
+Metrics/PerceivedComplexity:
+  Max: 16
