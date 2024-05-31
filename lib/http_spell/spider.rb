@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require 'nokogiri'
+require 'uri'
 require 'open-uri'
 require 'open3'
-require 'addressable/uri'
 require 'English'
 
 module HttpSpell
@@ -13,7 +13,7 @@ module HttpSpell
     def initialize(starting_point, whitelist: nil, blacklist: [], verbose: false, tracing: false)
       @todo = []
       @done = []
-      todo << Addressable::URI.parse(starting_point)
+      todo << URI(starting_point)
       @whitelist = whitelist || [/^#{starting_point}/]
       @blacklist = blacklist
       @verbose = verbose
@@ -35,7 +35,12 @@ module HttpSpell
           end
 
           done.append(url)
-          todo.concat(extracted - done - todo).uniq!
+          new_links = (extracted - done - todo).uniq
+
+          if new_links.any?
+            warn "Adding #{new_links.size} new links found at #{url}" if @verbose
+            todo.concat(extracted - done - todo).uniq!
+          end
         rescue StandardError
           warn "Skipping #{url} because of #{$ERROR_INFO.message}"
           warn $ERROR_INFO.backtrace if @tracing
@@ -52,15 +57,17 @@ module HttpSpell
       response = http_get(uri)
 
       if response.respond_to?(:content_type) && response.content_type != 'text/html'
-        warn "Skipping #{uri} because it is not HTML" if @verbose
+        warn "Skipping #{response.base_uri} because it is not HTML" if @verbose
         return []
       end
 
       doc = Nokogiri::HTML(response)
 
       links = doc.css('a[href]').map do |e|
-        link = Addressable::URI.parse(e['href'])
-        link = uri.join(link) if link.relative?
+        next if e['href'].start_with?('#') # Ignore fragment on the same page; we always check the whole page
+
+        link = URI.join(response.base_uri, e['href'])
+        link.fragment = nil # Ignore fragment in links to other pages, too
 
         if @whitelist.none? { |re| re.match?(link.to_s) }
           warn "Skipping #{link} because it is not on the whitelist #{@whitelist}" if @verbose
@@ -73,25 +80,20 @@ module HttpSpell
           next
         end
 
-        # Ignore fragment; we always check the whole page
-        link.fragment = nil
-
         link
       rescue StandardError
-        warn $ERROR_INFO.message
+        warn "Error: #{$ERROR_INFO}"
         warn $ERROR_INFO.backtrace if @tracing
       end.compact
 
-      yield uri, doc if block_given?
+      yield response.base_uri, doc if block_given?
 
-      warn "Adding #{links.size} links from #{uri}" if @verbose
       links
     end
 
     # https://twin.github.io/improving-open-uri/
     def http_get(uri)
       tries = 10
-
       begin
         URI.parse(uri).open(redirect: false)
       rescue OpenURI::HTTPRedirect => e

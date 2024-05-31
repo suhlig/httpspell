@@ -50,7 +50,7 @@ begin
     # TODO wget has some additional options for recursive behavior that should be reviewed
   end.parse!
 rescue StandardError
-  warn "Error - #{$ERROR_INFO}"
+  warn "Error: #{$ERROR_INFO}"
   exit 1
 end
 
@@ -59,13 +59,14 @@ if ARGV.size != 1
   exit 1
 end
 
-def check(doc, lang, personal_dictionary_path, verbose)
+def check(url, doc, lang, personal_dictionary_path, verbose)
   unknown_words = HttpSpell::SpellChecker.new(personal_dictionary_path, verbose:).check(doc, lang)
 
   if unknown_words.empty?
-    warn 'No unknown words.' if verbose
+    warn "#{url} (lang=#{lang}): No unknown words" if verbose
+    false
   else
-    warn "#{unknown_words.size} unknown words:" if verbose
+    warn "#{url} (lang=#{lang}): #{unknown_words.size} unknown words:" if verbose
     puts unknown_words
     true
   end
@@ -75,7 +76,6 @@ has_unknown_words = false
 
 spider_success = HttpSpell::Spider.new(ARGV.first, whitelist:, blacklist:, verbose:, tracing:).start do |url, doc|
   lang = force_language || doc.root['lang'] || ENV.fetch('LANGUAGE', nil)
-  warn "Checking #{url} as #{lang}" if verbose
 
   # Remove elements that are not to be spellchecked
   doc.css('pre').each(&:unlink)
@@ -85,13 +85,12 @@ spider_success = HttpSpell::Spider.new(ARGV.first, whitelist:, blacklist:, verbo
 
   # Handle elements with a different lang attribute separately
   doc.css(%([lang]:not([lang="#{lang}"]))).each do |element|
-    warn "Handling #{element.name} with lang #{element['lang']}:" if verbose
-    has_unknown_words |= check(element.to_s, element['lang'], personal_dictionary_path, verbose)
+    has_unknown_words |= check("#{url} => #{element.name} with", element.to_s, element['lang'], personal_dictionary_path, verbose)
     element.unlink
   end
 
   # Everything else
-  has_unknown_words |= check(doc.to_s, lang, personal_dictionary_path, verbose)
+  has_unknown_words |= check("#{url} => document with", doc.to_s, lang, personal_dictionary_path, verbose)
 end
 
 exit 2 unless spider_success

@@ -13,11 +13,6 @@ module HttpSpell
         "hunspell -d #{translate(lang)} #{@personal_dictionary_arg} -i UTF-8 -l",
       ]
 
-      if @verbose
-        warn 'Piping the HTML document into the following chain of commands:'
-        warn commands
-      end
-
       Open3.pipeline_rw(*commands) do |stdin, stdout, _wait_thrs|
         stdin.puts(doc)
         stdin.close

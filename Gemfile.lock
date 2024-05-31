@@ -1,15 +1,12 @@
 PATH
   remote: .
   specs:
-    httpspell (1.4.1)
-      addressable
+    httpspell (1.4.2)
       nokogiri
 
 GEM
   remote: https://rubygems.org/
   specs:
-    addressable (2.8.6)
-      public_suffix (>= 2.0.2, < 6.0)
     aruba (2.2.0)
       bundler (>= 1.17, < 3.0)
       contracts (>= 0.16.0, < 0.18.0)
@@ -91,7 +88,7 @@ GEM
       nenv (~> 0.1)
       shellany (~> 0.0)
     parallel (1.24.0)
-    parser (3.3.1.0)
+    parser (3.3.2.0)
       ast (~> 2.4.1)
       racc
     pry (0.14.2)
@@ -100,7 +97,6 @@ GEM
     pry-byebug (3.10.1)
       byebug (~> 11.0)
       pry (>= 0.13, < 0.15)
-    public_suffix (5.0.5)
     racc (1.8.0)
     rack (3.0.11)
     rackup (0.2.3)
@@ -127,7 +123,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
     rspec-support (3.13.1)
-    rubocop (1.64.0)
+    rubocop (1.64.1)
       json (~> 2.3)
       language_server-protocol (>= 3.17.0)
       parallel (~> 1.10)
