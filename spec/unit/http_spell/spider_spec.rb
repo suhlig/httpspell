@@ -13,10 +13,10 @@ describe HttpSpell::Spider do
     end
   end
 
-  let(:whitelist) { [Regexp.new("^#{starting_point}")] }
+  let(:included) { [Regexp.new("^#{starting_point}")] }
 
   before do
-    @success = described_class.new(starting_point, whitelist:).start do |url, _doc|
+    @success = described_class.new(starting_point, included:).start do |url, _doc|
       links << url.to_s
     end
   end
@@ -45,7 +45,7 @@ describe HttpSpell::Spider do
 
   describe 'when a document has a host-relative link with an absolute path' do
     let(:starting_point) { 'http://localhost:9123/foo/bar.html' }
-    let(:whitelist) { [Regexp.new('^http://localhost:9123/')] }
+    let(:included) { [Regexp.new('^http://localhost:9123/')] }
 
     let(:replies) do
       {
@@ -66,7 +66,7 @@ describe HttpSpell::Spider do
 
   describe 'when a document with extension has host-relative link with a relative path' do
     let(:starting_point) { 'http://localhost:9123/foo/bar.html' }
-    let(:whitelist) { [Regexp.new('^http://localhost:9123/foo/')] }
+    let(:included) { [Regexp.new('^http://localhost:9123/foo/')] }
 
     let(:replies) do
       {
@@ -87,7 +87,7 @@ describe HttpSpell::Spider do
 
   describe 'when a document without extension has host-relative link with a relative path' do
     let(:starting_point) { 'http://localhost:9123/foo/' }
-    let(:whitelist) { [Regexp.new('^http://localhost:9123/foo/')] }
+    let(:included) { [Regexp.new('^http://localhost:9123/foo/')] }
 
     let(:replies) do
       {
@@ -108,7 +108,7 @@ describe HttpSpell::Spider do
 
   describe 'when the server redirects' do
     let(:starting_point) { 'http://localhost:9123/foo' }
-    let(:whitelist) { [Regexp.new('^http://localhost:9123/')] }
+    let(:included) { [Regexp.new('^http://localhost:9123/')] }
 
     let(:replies) do
       {

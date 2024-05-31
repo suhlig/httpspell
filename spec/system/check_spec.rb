@@ -141,7 +141,7 @@ describe 'check', type: 'aruba' do
     end
 
     before do
-      run_command "#{httpspell} --whitelist http://localhost:#{port}/ http://localhost:#{port}/no-error-broken-link.html"
+      run_command "#{httpspell} --include http://localhost:#{port}/ http://localhost:#{port}/no-error-broken-link.html"
       stop_all_commands
     end
 
@@ -158,7 +158,7 @@ describe 'check', type: 'aruba' do
     end
   end
 
-  context 'when the content has links to a page that is blacklisted' do
+  context 'when the content has links to a page that is excluded' do
     let(:url) { "http://localhost:#{port}/link-to-error.html" }
 
     let(:replies) do
@@ -169,7 +169,7 @@ describe 'check', type: 'aruba' do
     end
 
     before do
-      run_command "#{httpspell} --blacklist single-spelling-error.html #{url}"
+      run_command "#{httpspell} --exclude single-spelling-error.html #{url}"
       stop_all_commands
     end
 
@@ -177,7 +177,7 @@ describe 'check', type: 'aruba' do
       expect(last_command_started).to be_successfully_executed
     end
 
-    it 'ignores blacklisted URLs' do
+    it 'ignores excluded URLs' do
       expect(last_command_started.stdout).to be_empty
     end
   end
@@ -194,7 +194,7 @@ describe 'check', type: 'aruba' do
     end
 
     before do
-      run_command "#{httpspell} --whitelist http://localhost:#{port}/ #{url}"
+      run_command "#{httpspell} --include http://localhost:#{port}/ #{url}"
       stop_all_commands
     end
 

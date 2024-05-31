@@ -10,8 +10,8 @@ personal_dictionary_path = nil
 force_language = nil
 tracing = nil
 verbose = nil
-whitelist = nil
-blacklist = []
+included = nil
+excluded = []
 
 begin
   OptionParser.new do |parser|
@@ -29,9 +29,9 @@ begin
       force_language = l
     end
 
-    parser.on('-w', '--whitelist=EXPRESSION', 'when recursively retrieving URLs, allow only those matching the given regular EXPRESSION') do |w|
-      whitelist ||= []
-      whitelist << Regexp.new(w)
+    parser.on('-i', '--include=EXPRESSION', 'when recursively retrieving URLs, allow only those matching the given regular EXPRESSION') do |w|
+      included ||= []
+      included << Regexp.new(w)
     end
 
     parser.on('-t', '--trace', 'enable error tracing') do
@@ -42,8 +42,8 @@ begin
       verbose = true
     end
 
-    parser.on('-b', '--blacklist=EXPRESSION', 'blacklist (ignore) URLs matching the given regular EXPRESSION') do |b|
-      blacklist << Regexp.new(b)
+    parser.on('-e', '--exclude=EXPRESSION', 'exclude URLs matching the given regular EXPRESSION') do |b|
+      excluded << Regexp.new(b)
     end
 
     # TODO: --recursive, defaults to false
@@ -74,7 +74,7 @@ end
 
 has_unknown_words = false
 
-spider_success = HttpSpell::Spider.new(ARGV.first, whitelist:, blacklist:, verbose:, tracing:).start do |url, doc|
+spider_success = HttpSpell::Spider.new(ARGV.first, included:, excluded:, verbose:, tracing:).start do |url, doc|
   lang = force_language || doc.root['lang'] || ENV.fetch('LANGUAGE', nil)
 
   # Remove elements that are not to be spellchecked

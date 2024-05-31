@@ -10,12 +10,12 @@ module HttpSpell
   class Spider
     attr_reader :todo, :done
 
-    def initialize(starting_point, whitelist: nil, blacklist: [], verbose: false, tracing: false)
+    def initialize(starting_point, included: nil, excluded: [], verbose: false, tracing: false)
       @todo = []
       @done = []
       todo << URI(starting_point)
-      @whitelist = whitelist || [/^#{starting_point}/]
-      @blacklist = blacklist
+      @included = included || [/^#{starting_point}/]
+      @excluded = excluded
       @verbose = verbose
       @tracing = tracing
     end
@@ -69,14 +69,14 @@ module HttpSpell
         link = URI.join(response.base_uri, e['href'])
         link.fragment = nil # Ignore fragment in links to other pages, too
 
-        if @whitelist.none? { |re| re.match?(link.to_s) }
-          warn "Skipping #{link} because it is not on the whitelist #{@whitelist}" if @verbose
+        if @included.none? { |re| re.match?(link.to_s) }
+          warn "Skipping #{link} because it is not on the included #{@included}" if @verbose
           next
         end
 
-        if @blacklist.any? { |re| re.match?(link.to_s) }
-          # TODO: Print _which_ entry of the blacklist matches
-          warn "Skipping #{link} because it is on the blacklist #{@blacklist}" if @verbose
+        if @excluded.any? { |re| re.match?(link.to_s) }
+          # TODO: Print _which_ entry of the excluded matches
+          warn "Skipping #{link} because it is on the excluded #{@excluded}" if @verbose
           next
         end
 

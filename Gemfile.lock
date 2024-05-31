@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    httpspell (1.4.2)
+    httpspell (1.5.0)
       nokogiri
 
 GEM
