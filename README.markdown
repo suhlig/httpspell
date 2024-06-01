@@ -39,7 +39,7 @@ Words that are not in the dictionary for the given language (inferred from the `
 
 # Misc
 
-If you produce content with kramdown (e.g. using Jekyll), setting `spellcheck='false'` for an element is a simple as adding this line *after* the element (e.g. heading):
+If you produce content with kramdown (e.g. using Jekyll), an [Inline Attribute List](https://kramdown.gettalong.org/syntax.html#inline-attribute-lists) can be used to set `spellcheck='false'` for an element by adding this line *after* the element (e.g. heading):
 
 ```
 {: spellcheck="false"}

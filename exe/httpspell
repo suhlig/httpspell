@@ -7,6 +7,7 @@ require 'http_spell/spellchecker'
 require 'http_spell/version'
 
 personal_dictionary_path = nil
+ignore_file_path = nil
 force_language = nil
 tracing = nil
 verbose = nil
@@ -14,6 +15,7 @@ included = nil
 excluded = []
 
 begin
+  # rubocop:disable Metrics/BlockLength
   OptionParser.new do |parser|
     parser.banner.prepend <<~BANNER
       Spellchecks a website via HTTP.
@@ -23,6 +25,10 @@ begin
 
     parser.on('-p', '--personal-dictionary=FILE', 'path to the personal dictionary file') do |p|
       personal_dictionary_path = p
+    end
+
+    parser.on('-I', '--ignore=FILE', 'path to a file containing spelling errors to ignore') do |i|
+      ignore_file_path = i
     end
 
     parser.on('-l', '--language=LANGUAGE', 'override LANGUAGE of content') do |l|
@@ -49,6 +55,7 @@ begin
     # TODO: --recursive, defaults to false
     # TODO wget has some additional options for recursive behavior that should be reviewed
   end.parse!
+  # rubocop:enable Metrics/BlockLength
 rescue StandardError
   warn "Error: #{$ERROR_INFO}"
   exit 1
@@ -59,18 +66,38 @@ if ARGV.size != 1
   exit 1
 end
 
-def check(url, doc, lang, personal_dictionary_path, verbose)
-  unknown_words = HttpSpell::SpellChecker.new(personal_dictionary_path, verbose:).check(doc, lang)
+# rubocop:disable Metrics/ParameterLists
+def check(url, doc, lang, personal_dictionary_path, ignore_file_path, verbose)
+  has_unknown_words = false
+
+  # Handle elements with a different lang attribute separately
+  doc.css(%([lang]:not([lang="#{lang}"]))).each do |element|
+    has_unknown_words |= check("#{url} => #{element.name} with", element, element['lang'], personal_dictionary_path, ignore_file_path, verbose)
+    element.unlink
+  end
+
+  unknown_words = HttpSpell::SpellChecker.new(personal_dictionary_path, verbose:).check(doc.to_s, lang)
+
+  if ignore_file_path && unknown_words.any?
+    ignore_words = File.read(ignore_file_path).lines.map(&:chomp)
+    ignored_words = unknown_words.intersection(ignore_words)
+
+    if ignored_words.any?
+      warn "#{url} (lang=#{lang}): Ignoring the following spelling errors because they are in the ignore list: #{ignored_words}" if verbose
+      unknown_words -= ignore_words
+    end
+  end
 
   if unknown_words.empty?
     warn "#{url} (lang=#{lang}): No unknown words" if verbose
-    false
+    has_unknown_words # no unknown words in doc, but maybe in elements with a different language
   else
     warn "#{url} (lang=#{lang}): #{unknown_words.size} unknown words:" if verbose
     puts unknown_words
-    true
+    true # regardless of what elements with a different language had, at least doc has unknown words
   end
 end
+# rubocop:enable Metrics/ParameterLists
 
 has_unknown_words = false
 
@@ -83,14 +110,7 @@ spider_success = HttpSpell::Spider.new(ARGV.first, included:, excluded:, verbose
   doc.css('iframe').each(&:unlink)
   doc.css('[spellcheck=false]').each(&:unlink)
 
-  # Handle elements with a different lang attribute separately
-  doc.css(%([lang]:not([lang="#{lang}"]))).each do |element|
-    has_unknown_words |= check("#{url} => #{element.name} with", element.to_s, element['lang'], personal_dictionary_path, verbose)
-    element.unlink
-  end
-
-  # Everything else
-  has_unknown_words |= check("#{url} => document with", doc.to_s, lang, personal_dictionary_path, verbose)
+  has_unknown_words |= check("#{url} => document with", doc, lang, personal_dictionary_path, ignore_file_path, verbose)
 end
 
 exit 2 unless spider_success

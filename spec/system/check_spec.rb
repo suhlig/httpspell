@@ -13,6 +13,9 @@ dictionaries = {
   'https://cgit.freedesktop.org/libreoffice/dictionaries/plain/it_IT/it_IT.aff' => 'it_IT.aff'
 }
 
+# TODO: --ignore
+# TODO Recursive override of lang
+
 describe 'check', type: 'aruba' do
   let(:httpspell) do
     ENV['DICPATH'] = "#{aruba.root_directory}/spec/dictionaries"
