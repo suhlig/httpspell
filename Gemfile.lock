@@ -108,8 +108,7 @@ GEM
     rb-inotify (0.11.1)
       ffi (~> 1.0)
     regexp_parser (2.9.2)
-    rexml (3.3.4)
-      strscan
+    rexml (3.3.9)
     rspec (3.13.0)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -142,7 +141,6 @@ GEM
       rubocop (~> 1.61)
     ruby-progressbar (1.13.0)
     shellany (0.0.1)
-    strscan (3.1.0)
     stub_server (0.7.0)
       rackup (~> 0.2.2)
       webrick
